@@ -204,21 +204,27 @@ export default function App() {
         if (data.imagePrompt) {
           setIsGeneratingImage(true);
           try {
-            const imageResponse = await ai.models.generateContent({
-              model: 'gemini-2.5-flash-image',
-              contents: { parts: [{ text: data.imagePrompt }] },
-              config: {
-                imageConfig: {
-                  aspectRatio: "1:1",
-                }
-              }
+            const nvidiaRes = await fetch('https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-3-medium', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                prompt: data.imagePrompt,
+                cfg_scale: 5,
+                seed: 0,
+                steps: 50,
+                aspect_ratio: "1:1"
+              })
             });
             
-            for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-              if (part.inlineData) {
-                setGeneratedImage(`data:image/png;base64,${part.inlineData.data}`);
-                break;
-              }
+            const nvidiaData = await nvidiaRes.json();
+            if (nvidiaData.image) {
+              setGeneratedImage(`data:image/jpeg;base64,${nvidiaData.image}`);
+            } else {
+              console.error("NVIDIA API Error:", nvidiaData);
             }
           } catch (imgError) {
             console.error("Failed to generate image:", imgError);
@@ -297,20 +303,28 @@ export default function App() {
         
         const optimizedPrompt = promptResponse.text?.trim() || input.substring(0, 500);
 
-        const imageResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
-          contents: { parts: [{ text: optimizedPrompt }] },
-          config: {
-            imageConfig: {
-              aspectRatio: aspectRatio,
-            }
-          }
+        const nvidiaRes = await fetch('https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-3-medium', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            prompt: optimizedPrompt,
+            cfg_scale: 5,
+            seed: 0,
+            steps: 50,
+            aspect_ratio: aspectRatio
+          })
         });
-        for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-          if (part.inlineData) {
-            setThumbnailResult(`data:image/png;base64,${part.inlineData.data}`);
-            break;
-          }
+        
+        const nvidiaData = await nvidiaRes.json();
+        if (nvidiaData.image) {
+          setThumbnailResult(`data:image/jpeg;base64,${nvidiaData.image}`);
+        } else {
+          console.error("NVIDIA API Error:", nvidiaData);
+          alert("Failed to generate thumbnail image.");
         }
       } else if (activeTab === 'script') {
         parts.unshift({ text: `You are an expert short-form video scriptwriter (TikTok/Reels/Shorts). Write a highly engaging 60-second script based on this topic/URL. Format it with timestamps (0-3s Hook, 3-15s Setup, 15-45s Value, 45-60s CTA). Include visual cues in brackets [like this] and the spoken text normally.` });
