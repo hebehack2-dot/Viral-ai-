@@ -183,7 +183,6 @@ export default function App() {
           model: 'gemini-3-flash-preview',
           contents: { parts },
           config: {
-            tools: [{ googleSearch: {} }],
             responseMimeType: "application/json",
             responseSchema: {
               type: Type.OBJECT,
@@ -236,7 +235,6 @@ export default function App() {
           model: 'gemini-3-flash-preview',
           contents: { parts },
           config: {
-            tools: [{ googleSearch: {} }],
             responseMimeType: "application/json",
             responseSchema: {
               type: Type.OBJECT,
