@@ -206,7 +206,12 @@ export default function App() {
           try {
             const imageResponse = await ai.models.generateContent({
               model: 'gemini-2.5-flash-image',
-              contents: data.imagePrompt,
+              contents: { parts: [{ text: data.imagePrompt }] },
+              config: {
+                imageConfig: {
+                  aspectRatio: "1:1",
+                }
+              }
             });
             
             for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
@@ -284,9 +289,17 @@ export default function App() {
         });
         setBulkResults(JSON.parse(response.text || '{}'));
       } else if (activeTab === 'thumbnail') {
+        // First, generate a concise image prompt from the user's input
+        const promptResponse = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `You are an expert AI image prompt engineer. Based on the following topic, title, or article, create a highly detailed, cinematic, and eye-catching prompt for an AI image generator to create a viral thumbnail. Keep the prompt under 500 characters. Return ONLY the prompt text, nothing else.\n\nInput: ${input}\n\n${brandVoice ? `Style guidelines: ${brandVoice}` : ''}`
+        });
+        
+        const optimizedPrompt = promptResponse.text?.trim() || input.substring(0, 500);
+
         const imageResponse = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
-          contents: `Create a highly detailed, eye-catching, viral thumbnail image for the following topic/title: ${input}. ${brandVoice ? `Style guidelines: ${brandVoice}` : ''}`,
+          contents: { parts: [{ text: optimizedPrompt }] },
           config: {
             imageConfig: {
               aspectRatio: aspectRatio,
@@ -303,14 +316,14 @@ export default function App() {
         parts.unshift({ text: `You are an expert short-form video scriptwriter (TikTok/Reels/Shorts). Write a highly engaging 60-second script based on this topic/URL. Format it with timestamps (0-3s Hook, 3-15s Setup, 15-45s Value, 45-60s CTA). Include visual cues in brackets [like this] and the spoken text normally.` });
         const response = await ai.models.generateContent({
           model: 'gemini-3.1-pro-preview',
-          contents: parts
+          contents: { parts }
         });
         setScriptResult(response.text || '');
       } else if (activeTab === 'voice') {
         parts.unshift({ text: `You are an expert copywriter and brand strategist. Analyze the following 3 posts/texts and extract the exact "Brand Voice DNA". Identify the vocabulary, sentence length, tone, emoji usage, and formatting style. Return a comprehensive "Brand Voice Profile" that can be used as instructions for an AI to write exactly like this person.` });
         const response = await ai.models.generateContent({
           model: 'gemini-3.1-pro-preview',
-          contents: parts
+          contents: { parts }
         });
         setClonedVoice(response.text || '');
         setBrandVoice(response.text || ''); // Auto-apply
@@ -318,14 +331,14 @@ export default function App() {
         parts.unshift({ text: `You are a master copywriter. Analyze the provided competitor post/URL to extract its underlying psychological framework and structure (why it went viral). Then, strip away the original topic and write a BRAND NEW post using that exact viral framework, but applied to this new topic: "${stealTopic}".` });
         const response = await ai.models.generateContent({
           model: 'gemini-3.1-pro-preview',
-          contents: parts
+          contents: { parts }
         });
         setStealResult(response.text || '');
       } else if (activeTab === 'lead') {
         parts.unshift({ text: `You are an expert marketer and course creator. Take the provided raw content/transcript/blog posts and transform it into a highly valuable Lead Magnet. Structure it as either a "5-Day Email Course" (with 5 distinct daily emails) or a "10-Page PDF Guide Outline" (with chapters and bullet points). Make it actionable and engaging.` });
         const response = await ai.models.generateContent({
           model: 'gemini-3.1-pro-preview',
-          contents: parts
+          contents: { parts }
         });
         setLeadResult(response.text || '');
       }
