@@ -204,7 +204,7 @@ export default function App() {
         if (data.imagePrompt) {
           setIsGeneratingImage(true);
           try {
-            const nvidiaRes = await fetch('https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-3-medium', {
+            const nvidiaRes = await fetch('/api/nvidia/v1/genai/stabilityai/stable-diffusion-3-medium', {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,
@@ -303,7 +303,7 @@ export default function App() {
         
         const optimizedPrompt = promptResponse.text?.trim() || input.substring(0, 500);
 
-        const nvidiaRes = await fetch('https://ai.api.nvidia.com/v1/genai/stabilityai/stable-diffusion-3-medium', {
+        const nvidiaRes = await fetch('/api/nvidia/v1/genai/stabilityai/stable-diffusion-3-medium', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_NVIDIA_API_KEY}`,

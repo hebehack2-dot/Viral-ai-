@@ -11,7 +11,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: 3000
+      port: 3000,
+      proxy: {
+        '/api/nvidia': {
+          target: 'https://ai.api.nvidia.com',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/nvidia/, '')
+        }
+      }
     }
   }
 })
