@@ -103,12 +103,11 @@ export default function App() {
         // First, generate a concise image prompt from the user's input
         const promptResponse = await ai.models.generateContent({
           model: 'gemini-3-flash-preview',
-          contents: `You are an expert AI image prompt engineer. Based on the following topic, title, or article, create a highly detailed, cinematic, and eye-catching prompt for an AI image generator (FLUX.1) to create a viral YouTube thumbnail. 
+          contents: `You are an expert AI image prompt engineer. Based on the following topic, title, or article, create a highly detailed, cinematic, and eye-catching prompt for an AI image generator to create a viral YouTube thumbnail. 
 
 CRITICAL INSTRUCTIONS:
-- FLUX.1 responds well to natural, descriptive language. Describe the scene, lighting, camera angle, and subject in detail.
-- MAKE IT LOOK LIKE A REAL YOUTUBE THUMBNAIL: Explicitly include instructions for "bold, massive 3D text overlay with a catchy short phrase", "exaggerated reaction face (shocked, excited)", "glowing outlines", "bright neon arrows or circles", and "split-screen or dynamic layout".
-- The prompt MUST explicitly ask for text to be rendered on the image (e.g., "Bold 3D text saying 'OMG!'").
+- Describe the scene, lighting, camera angle, and subject in detail.
+- MAKE IT LOOK LIKE A REAL YOUTUBE THUMBNAIL: Explicitly include instructions for "exaggerated reaction face (shocked, excited)", "glowing outlines", "bright neon arrows or circles", and "split-screen or dynamic layout".
 - Explicitly specify "high quality, masterpiece, 8k resolution, vibrant colors, high contrast, YouTube thumbnail style, engaging, clickbait".
 - Ensure the subject is fully in frame and well-composed.
 - AVOID ANY words related to violence, weapons, guns, gore, or NSFW content. The image generator has strict safety filters. Use safe alternatives like "intense gaming action", "glowing smartphone", "excited gamer".
