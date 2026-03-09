@@ -120,33 +120,35 @@ Input: ${input}`
         
         const optimizedPrompt = (promptResponse.text?.trim() || input).substring(0, 400);
 
-        const imageResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
-          contents: {
-            parts: [{ text: optimizedPrompt }]
+        const nvidiaApiKey = import.meta.env.VITE_NVIDIA_API_KEY || "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";
+        
+        const imageResponse = await fetch('/api/nvidia/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${nvidiaApiKey}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
           },
-          config: {
-            imageConfig: {
-              aspectRatio: aspectRatio
-            }
-          }
+          body: JSON.stringify({
+            model: 'stabilityai/stable-diffusion-3.5-large',
+            prompt: optimizedPrompt,
+            response_format: 'b64_json',
+            aspect_ratio: aspectRatio === '16:9' ? '16:9' : '1:1'
+          })
         });
-        
-        let foundImage = false;
-        for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-          if (part.inlineData) {
-            setThumbnailResult(`data:image/jpeg;base64,${part.inlineData.data}`);
-            foundImage = true;
-            break;
-          }
+
+        if (!imageResponse.ok) {
+          const errorText = await imageResponse.text();
+          console.error("Nvidia API Error:", errorText);
+          throw new Error(`Nvidia API Error: ${imageResponse.status}. Please check your API key or prompt.`);
         }
+
+        const imageData = await imageResponse.json();
         
-        if (!foundImage) {
-          const finishReason = imageResponse.candidates?.[0]?.finishReason;
-          if (finishReason === 'SAFETY') {
-            throw new Error("The generated prompt was blocked by safety filters. Please try a different, safer prompt.");
-          }
-          throw new Error("Failed to generate thumbnail image. No image data returned.");
+        if (imageData?.data?.[0]?.b64_json) {
+          setThumbnailResult(`data:image/jpeg;base64,${imageData.data[0].b64_json}`);
+        } else {
+          throw new Error("Failed to generate thumbnail image. No image data returned from Nvidia.");
         }
       }
 
@@ -154,7 +156,11 @@ Input: ${input}`
 
     } catch (error: any) {
       console.error("Failed to generate:", error);
-      alert(`Error: ${error.message || 'Something went wrong. Please try again.'}`);
+      let errorMessage = error.message || 'Something went wrong. Please try again.';
+      if (errorMessage.includes('429') || errorMessage.includes('RESOURCE_EXHAUSTED') || errorMessage.includes('quota')) {
+        errorMessage = "API quota exceeded. Please check your billing details or try again later.";
+      }
+      alert(`Error: ${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
