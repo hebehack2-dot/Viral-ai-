@@ -75,8 +75,9 @@ export default function App() {
         }
       });
       setThumbnailMetadata(JSON.parse(response.text || '{}'));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate metadata:", error);
+      alert(`Error: ${error.message || 'Something went wrong. Please try again.'}`);
     } finally {
       setIsGeneratingMetadata(false);
     }
@@ -117,7 +118,7 @@ CRITICAL INSTRUCTIONS:
 Input: ${input}`
         });
         
-        const optimizedPrompt = promptResponse.text?.trim() || input.substring(0, 500);
+        const optimizedPrompt = (promptResponse.text?.trim() || input).substring(0, 400);
 
         const imageResponse = await ai.models.generateContent({
           model: 'gemini-2.5-flash-image',
@@ -141,15 +142,19 @@ Input: ${input}`
         }
         
         if (!foundImage) {
-          throw new Error("Failed to generate thumbnail image.");
+          const finishReason = imageResponse.candidates?.[0]?.finishReason;
+          if (finishReason === 'SAFETY') {
+            throw new Error("The generated prompt was blocked by safety filters. Please try a different, safer prompt.");
+          }
+          throw new Error("Failed to generate thumbnail image. No image data returned.");
         }
       }
 
       setCredits(prev => prev - 1);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate:", error);
-      alert("Something went wrong. Please try again.");
+      alert(`Error: ${error.message || 'Something went wrong. Please try again.'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -192,9 +197,9 @@ Input: ${input}`
         setIdeaResult(JSON.parse(response.text));
         setCredits(prev => prev - 1);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to generate idea:", error);
-      alert("Failed to generate idea. Please try again.");
+      alert(`Error: ${error.message || 'Failed to generate idea. Please try again.'}`);
     } finally {
       setIsGeneratingIdea(false);
     }
